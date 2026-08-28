@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>админка</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0e0e0e;
+            color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+        .left-panel {
+            flex: 1;
+            min-width: 300px;
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.8);
+        }
+        .right-panel {
+            flex: 1;
+            min-width: 300px;
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+        }
+        h2 {
+            font-size: 16px;
+            font-weight: 500;
+            color: #aaa;
+            margin-bottom: 16px;
+            letter-spacing: 0.3px;
+        }
+        
+        /* Левая панель - команды */
+        .cmd-item {
+            background: #262626;
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+            border: 2px solid transparent;
+            user-select: none;
+        }
+        .cmd-item:hover {
+            background: #2e2e2e;
+            border-color: #3a3a3a;
+        }
+        .cmd-item:active {
+            transform: scale(0.98);
+        }
+        .cmd-label {
+            font-size: 14px;
+            color: #888;
+            min-width: 100px;
+            font-weight: 500;
+        }
+        .cmd-text {
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 14px;
+            color: #d4d4d4;
+            flex: 1;
+            margin: 0 12px;
+            word-break: break-all;
+        }
+        .cmd-item.copied {
+            border-color: #4caf50;
+            background: #1e2a1e;
+        }
+        
+        /* Правая панель - генератор */
+        .section {
+            margin-bottom: 20px;
+        }
+        .section-label {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .players-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .player-btn {
+            background: #262626;
+            border: 2px solid transparent;
+            color: #d4d4d4;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .player-btn:hover {
+            background: #333;
+        }
+        .player-btn.active {
+            border-color: #4caf50;
+            background: #1e2a1e;
+        }
+        .action-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .action-btn {
+            flex: 1;
+            background: #262626;
+            border: 2px solid transparent;
+            color: #d4d4d4;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .action-btn:hover {
+            background: #333;
+        }
+        .action-btn.active-give {
+            border-color: #4caf50;
+            background: #1e2a1e;
+        }
+        .action-btn.active-clear {
+            border-color: #f44336;
+            background: #2a1e1e;
+        }
+        .search-wrap {
+            position: relative;
+        }
+        .search-input {
+            width: 100%;
+            background: #262626;
+            border: 2px solid transparent;
+            color: #d4d4d4;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .search-input:focus {
+            border-color: #4caf50;
+        }
+        .search-selected {
+            font-size: 12px;
+            color: #4caf50;
+            margin-top: 6px;
+            display: none;
+        }
+        .search-selected.show {
+            display: block;
+        }
+        .suggestions {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            right: 0;
+            background: #1f1f1f;
+            border: 1px solid #333;
+            border-radius: 10px;
+            max-height: 220px;
+            overflow-y: auto;
+            z-index: 10;
+            display: none;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+        }
+        .suggestions.show {
+            display: block;
+        }
+        .suggestion-item {
+            padding: 10px 14px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #d4d4d4;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+        .suggestion-item:hover,
+        .suggestion-item.highlighted {
+            background: #2e2e2e;
+        }
+        .suggestion-en {
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 12px;
+            color: #666;
+            white-space: nowrap;
+        }
+        .suggestion-empty {
+            padding: 10px 14px;
+            font-size: 13px;
+            color: #666;
+        }
+        .amount-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #262626;
+            border-radius: 8px;
+            padding: 4px;
+            width: fit-content;
+        }
+        .amount-btn {
+            background: #333;
+            border: none;
+            color: #d4d4d4;
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            font-size: 20px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-family: inherit;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .amount-btn:hover {
+            background: #444;
+        }
+        .amount-btn:active {
+            transform: scale(0.95);
+        }
+        .amount-input {
+            background: transparent;
+            border: none;
+            color: #d4d4d4;
+            font-size: 18px;
+            width: 50px;
+            text-align: center;
+            font-family: inherit;
+            outline: none;
+        }
+        .amount-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+        }
+        .amount-input[type=number] {
+            -moz-appearance: textfield;
+        }
+        .amount-disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+        .clear-hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+        .result-box {
+            margin-top: auto;
+            background: #0e0e0e;
+            border-radius: 12px;
+            padding: 16px;
+            border: 2px solid #2a2a2a;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            margin-top: 20px;
+        }
+        .result-box:hover {
+            border-color: #3a3a3a;
+            background: #141414;
+        }
+        .result-box.copied {
+            border-color: #4caf50;
+            background: #1a2a1a;
+        }
+        .result-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 6px;
+        }
+        .result-code {
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 16px;
+            color: #d4d4d4;
+            word-break: break-all;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(40,40,40,0.95);
+            color: #eee;
+            padding: 10px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            border: 1px solid #444;
+            backdrop-filter: blur(10px);
+        }
+        .toast.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Левая панель - готовые команды -->
+    <div class="left-panel">
+        <h2>готовые команды</h2>
+
+        <div class="cmd-item" data-copy="time set day">
+            <span class="cmd-label">день</span>
+            <span class="cmd-text">time set day</span>
+        </div>
+
+        <div class="cmd-item" data-copy="time set night">
+            <span class="cmd-label">ночь</span>
+            <span class="cmd-text">time set night</span>
+        </div>
+
+        <div class="cmd-item" data-copy="weather clear">
+            <span class="cmd-label">ясная погода</span>
+            <span class="cmd-text">weather clear</span>
+        </div>
+
+        <div class="cmd-item" data-copy="kill @e[type=creeper]">
+            <span class="cmd-label">криперы</span>
+            <span class="cmd-text">kill @e[type=creeper]</span>
+        </div>
+
+        <div class="cmd-item" data-copy="kill @e[type=skeleton]">
+            <span class="cmd-label">скелеты</span>
+            <span class="cmd-text">kill @e[type=skeleton]</span>
+        </div>
+
+        <div class="cmd-item" data-copy="kill @e[type=zombie]">
+            <span class="cmd-label">зомби</span>
+            <span class="cmd-text">kill @e[type=zombie]</span>
+        </div>
+
+        <div class="cmd-item" data-copy="kill @e[type=enderman]">
+            <span class="cmd-label">эндеры</span>
+            <span class="cmd-text">kill @e[type=enderman]</span>
+        </div>
+
+        <div class="cmd-item" data-copy="kill @e[type=spider]">
+            <span class="cmd-label">пауки</span>
+            <span class="cmd-text">kill @e[type=spider]</span>
+        </div>
+    </div>
+
+    <!-- Правая панель - генератор -->
+    <div class="right-panel">
+        <h2>генератор</h2>
+
+        <div class="section">
+            <span class="section-label">игрок</span>
+            <div class="players-list">
+                <button class="player-btn" data-player="EternalSugar845">EternalSugar845</button>
+                <button class="player-btn" data-player="Yan2125">Yan2125</button>
+                <button class="player-btn" data-player="gretta9339">gretta9339</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <span class="section-label">действие</span>
+            <div class="action-group">
+                <button class="action-btn active-give" data-action="give">выдать</button>
+                <button class="action-btn" data-action="clear">удалить</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <span class="section-label">выбор блока</span>
+            <div class="search-wrap">
+                <input type="text" class="search-input" id="blockSearchInput" placeholder="начни вводить название..." autocomplete="off">
+                <div class="suggestions" id="suggestionsBox"></div>
+            </div>
+            <div class="search-selected" id="searchSelected"></div>
+        </div>
+
+        <div class="section">
+            <span class="section-label">количество</span>
+            <div class="amount-control" id="amountControl">
+                <button class="amount-btn" id="minusBtn">−</button>
+                <input type="number" class="amount-input" id="amountInput" value="1" min="1" max="64">
+                <button class="amount-btn" id="plusBtn">+</button>
+            </div>
+            <div class="clear-hint" id="clearHint">в режиме удалить количество не используется</div>
+        </div>
+
+        <div class="result-box" id="resultBox">
+            <div class="result-label">нажми чтобы скопировать</div>
+            <div class="result-code" id="resultCode">give EternalSugar845 copper_sword 1</div>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="toast">скопировано</div>
+
+<script>
+    // ===== ЛЕВАЯ ПАНЕЛЬ - КОПИРОВАНИЕ КОМАНД =====
+    const cmdItems = document.querySelectorAll('.cmd-item');
+    const toast = document.getElementById('toast');
+
+    cmdItems.forEach(item => {
+        item.addEventListener('click', async () => {
+            const text = item.dataset.copy;
+            try {
+                await navigator.clipboard.writeText(text);
+                showToast('скопировано');
+                cmdItems.forEach(el => el.classList.remove('copied'));
+                item.classList.add('copied');
+                setTimeout(() => item.classList.remove('copied'), 1000);
+            } catch (err) {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast('скопировано');
+                cmdItems.forEach(el => el.classList.remove('copied'));
+                item.classList.add('copied');
+                setTimeout(() => item.classList.remove('copied'), 1000);
+            }
+        });
+    });
+
+    // ===== БАЗА БЛОКОВ ДЛЯ ПОИСКА =====
+    const BLOCKS = [{"ru": "камень", "en": "stone"}, {"ru": "гранит", "en": "granite"}, {"ru": "полированный гранит", "en": "polished_granite"}, {"ru": "диорит", "en": "diorite"}, {"ru": "полированный диорит", "en": "polished_diorite"}, {"ru": "андезит", "en": "andesite"}, {"ru": "полированный андезит", "en": "polished_andesite"}, {"ru": "трава", "en": "grass_block"}, {"ru": "земля", "en": "dirt"}, {"ru": "грубая земля", "en": "coarse_dirt"}, {"ru": "подзол", "en": "podzol"}, {"ru": "каменистая земля", "en": "rocky_dirt"}, {"ru": "коренная порода", "en": "bedrock"}, {"ru": "песок", "en": "sand"}, {"ru": "красный песок", "en": "red_sand"}, {"ru": "гравий", "en": "gravel"}, {"ru": "глина", "en": "clay"}, {"ru": "белый камень", "en": "white_stone"}, {"ru": "известняк", "en": "limestone"}, {"ru": "булыжник", "en": "cobblestone"}, {"ru": "моховой булыжник", "en": "mossy_cobblestone"}, {"ru": "снег", "en": "snow"}, {"ru": "снежный блок", "en": "snow_block"}, {"ru": "лёд", "en": "ice"}, {"ru": "плотный лёд", "en": "packed_ice"}, {"ru": "голубой лёд", "en": "blue_ice"}, {"ru": "дубовая доска", "en": "oak_planks"}, {"ru": "еловая доска", "en": "spruce_planks"}, {"ru": "берёзовая доска", "en": "birch_planks"}, {"ru": "доска из тёмного дуба", "en": "dark_oak_planks"}, {"ru": "доска из акации", "en": "acacia_planks"}, {"ru": "доска из мангрового дерева", "en": "mangrove_planks"}, {"ru": "вишнёвая доска", "en": "cherry_planks"}, {"ru": "бамбуковая доска", "en": "bamboo_planks"}, {"ru": "дубовое бревно", "en": "oak_log"}, {"ru": "еловое бревно", "en": "spruce_log"}, {"ru": "берёзовое бревно", "en": "birch_log"}, {"ru": "бревно из тёмного дуба", "en": "dark_oak_log"}, {"ru": "бревно из акации", "en": "acacia_log"}, {"ru": "бревно из мангрового дерева", "en": "mangrove_log"}, {"ru": "вишнёвое бревно", "en": "cherry_log"}, {"ru": "ствол бамбука", "en": "bamboo_block"}, {"ru": "дубовая листва", "en": "oak_leaves"}, {"ru": "еловая листва", "en": "spruce_leaves"}, {"ru": "берёзовая листва", "en": "birch_leaves"}, {"ru": "листва тёмного дуба", "en": "dark_oak_leaves"}, {"ru": "листва акации", "en": "acacia_leaves"}, {"ru": "листва мангрового дерева", "en": "mangrove_leaves"}, {"ru": "вишнёвая листва", "en": "cherry_leaves"}, {"ru": "дубовый саженец", "en": "oak_sapling"}, {"ru": "еловый саженец", "en": "spruce_sapling"}, {"ru": "берёзовый саженец", "en": "birch_sapling"}, {"ru": "саженец тёмного дуба", "en": "dark_oak_sapling"}, {"ru": "саженец акации", "en": "acacia_sapling"}, {"ru": "саженец мангрового дерева", "en": "mangrove_propagule"}, {"ru": "вишнёвый саженец", "en": "cherry_sapling"}, {"ru": "трава", "en": "short_grass"}, {"ru": "папоротник", "en": "fern"}, {"ru": "куст", "en": "bush"}, {"ru": "мёртвый куст", "en": "deadbush"}, {"ru": "цветок", "en": "flower"}, {"ru": "одуванчик", "en": "dandelion"}, {"ru": "мак", "en": "poppy"}, {"ru": "синяя орхидея", "en": "blue_orchid"}, {"ru": "аллиум", "en": "allium"}, {"ru": "голубой василёк", "en": "azure_bluet"}, {"ru": "красный тюльпан", "en": "red_tulip"}, {"ru": "оранжевый тюльпан", "en": "orange_tulip"}, {"ru": "белый тюльпан", "en": "white_tulip"}, {"ru": "розовый тюльпан", "en": "pink_tulip"}, {"ru": "ромашка", "en": "oxeye_daisy"}, {"ru": "василёк", "en": "cornflower"}, {"ru": "ландыш", "en": "lily_of_the_valley"}, {"ru": "подсолнух", "en": "sunflower"}, {"ru": "сирень", "en": "lilac"}, {"ru": "высокий куст", "en": "tall_grass"}, {"ru": "большой папоротник", "en": "large_fern"}, {"ru": "розовый куст", "en": "rose_bush"}, {"ru": "пион", "en": "peony"}, {"ru": "угольная руда", "en": "coal_ore"}, {"ru": "железная руда", "en": "iron_ore"}, {"ru": "золотая руда", "en": "gold_ore"}, {"ru": "редстоуновая руда", "en": "redstone_ore"}, {"ru": "светящаяся редстоуновая руда", "en": "lit_redstone_ore"}, {"ru": "лазуритовая руда", "en": "lapis_ore"}, {"ru": "алмазная руда", "en": "diamond_ore"}, {"ru": "изумрудная руда", "en": "emerald_ore"}, {"ru": "незеритовая руда", "en": "netherite_ore"}, {"ru": "медная руда", "en": "copper_ore"}, {"ru": "глубокий сланец с углём", "en": "deepslate_coal_ore"}, {"ru": "глубокий сланец с железом", "en": "deepslate_iron_ore"}, {"ru": "глубокий сланец с золотом", "en": "deepslate_gold_ore"}, {"ru": "глубокий сланец с редстоуном", "en": "deepslate_redstone_ore"}, {"ru": "глубокий сланец с лазуритом", "en": "deepslate_lapis_ore"}, {"ru": "глубокий сланец с алмазом", "en": "deepslate_diamond_ore"}, {"ru": "глубокий сланец с изумрудом", "en": "deepslate_emerald_ore"}, {"ru": "глубокий сланец с медью", "en": "deepslate_copper_ore"}, {"ru": "угольный блок", "en": "coal_block"}, {"ru": "железный блок", "en": "iron_block"}, {"ru": "золотой блок", "en": "gold_block"}, {"ru": "блок лазурита", "en": "lapis_block"}, {"ru": "алмазный блок", "en": "diamond_block"}, {"ru": "изумрудный блок", "en": "emerald_block"}, {"ru": "незеритовый блок", "en": "netherite_block"}, {"ru": "медный блок", "en": "copper_block"}, {"ru": "блок из сырой меди", "en": "raw_copper_block"}, {"ru": "блок из сырого золота", "en": "raw_gold_block"}, {"ru": "блок из сырого железа", "en": "raw_iron_block"}, {"ru": "каменный кирпич", "en": "stonebrick"}, {"ru": "потрескавшийся каменный кирпич", "en": "cracked_stone_bricks"}, {"ru": "замшелый каменный кирпич", "en": "mossy_stone_bricks"}, {"ru": "резной каменный кирпич", "en": "chiseled_stone_bricks"}, {"ru": "блок из кварца", "en": "quartz_block"}, {"ru": "резной кварцевый блок", "en": "chiseled_quartz_block"}, {"ru": "кварцевые колонны", "en": "quartz_pillar"}, {"ru": "гладкий кварц", "en": "smooth_quartz"}, {"ru": "незерский кирпич", "en": "nether_brick"}, {"ru": "потрескавшийся незерский кирпич", "en": "cracked_nether_bricks"}, {"ru": "резной незерский кирпич", "en": "chiseled_nether_bricks"}, {"ru": "красный незерский кирпич", "en": "red_nether_brick"}, {"ru": "блок эндерняка", "en": "end_stone"}, {"ru": "эндерняковый кирпич", "en": "end_stone_brick"}, {"ru": "призмарин", "en": "prismarine"}, {"ru": "призмариновый кирпич", "en": "prismarine_bricks"}, {"ru": "тёмный призмарин", "en": "dark_prismarine"}, {"ru": "камень Края", "en": "purpur_block"}, {"ru": "колонны из камня Края", "en": "purpur_pillar"}, {"ru": "резной камень Края", "en": "chiseled_purpur"}, {"ru": "блок из костей", "en": "bone_block"}, {"ru": "песчаник", "en": "sandstone"}, {"ru": "резной песчаник", "en": "chiseled_sandstone"}, {"ru": "гладкий песчаник", "en": "smooth_sandstone"}, {"ru": "красный песчаник", "en": "red_sandstone"}, {"ru": "резной красный песчаник", "en": "chiseled_red_sandstone"}, {"ru": "гладкий красный песчаник", "en": "smooth_red_sandstone"}, {"ru": "блок из сланца", "en": "deepslate"}, {"ru": "полированный сланец", "en": "polished_deepslate"}, {"ru": "сланец с трещинами", "en": "cracked_deepslate"}, {"ru": "кирпич из глубого сланца", "en": "deepslate_brick"}, {"ru": "потрескавшийся кирпич из глубого сланца", "en": "cracked_deepslate_bricks"}, {"ru": "кирпич из глубого сланца", "en": "deepslate_tile"}, {"ru": "потрескавшаяся плитка из глубого сланца", "en": "cracked_deepslate_tiles"}, {"ru": "резной сланец", "en": "chiseled_deepslate"}, {"ru": "полированный чёрный камень", "en": "polished_blackstone"}, {"ru": "потрескавшийся полированный чёрный камень", "en": "cracked_polished_blackstone"}, {"ru": "кирпич из полированного чёрного камня", "en": "polished_blackstone_brick"}, {"ru": "потрескавшийся кирпич из полированного чёрного камня", "en": "cracked_polished_blackstone_bricks"}, {"ru": "резной полированный чёрный камень", "en": "chiseled_polished_blackstone"}, {"ru": "базальт", "en": "basalt"}, {"ru": "полированный базальт", "en": "polished_basalt"}, {"ru": "гладкий базальт", "en": "smooth_basalt"}, {"ru": "обсидиан", "en": "obsidian"}, {"ru": "плачущий обсидиан", "en": "crying_obsidian"}, {"ru": "блок света", "en": "light_block"}, {"ru": "стекло", "en": "glass"}, {"ru": "стеклянная панель", "en": "glass_pane"}, {"ru": "белое стекло", "en": "white_stained_glass"}, {"ru": "белая стеклянная панель", "en": "white_stained_glass_pane"}, {"ru": "оранжевое стекло", "en": "orange_stained_glass"}, {"ru": "оранжевая стеклянная панель", "en": "orange_stained_glass_pane"}, {"ru": "пурпурное стекло", "en": "magenta_stained_glass"}, {"ru": "пурпурная стеклянная панель", "en": "magenta_stained_glass_pane"}, {"ru": "светло-голубое стекло", "en": "light_blue_stained_glass"}, {"ru": "светло-голубая стеклянная панель", "en": "light_blue_stained_glass_pane"}, {"ru": "жёлтое стекло", "en": "yellow_stained_glass"}, {"ru": "жёлтая стеклянная панель", "en": "yellow_stained_glass_pane"}, {"ru": "салатовое стекло", "en": "lime_stained_glass"}, {"ru": "салатовая стеклянная панель", "en": "lime_stained_glass_pane"}, {"ru": "розовое стекло", "en": "pink_stained_glass"}, {"ru": "розовая стеклянная панель", "en": "pink_stained_glass_pane"}, {"ru": "серое стекло", "en": "gray_stained_glass"}, {"ru": "серая стеклянная панель", "en": "gray_stained_glass_pane"}, {"ru": "светло-серое стекло", "en": "light_gray_stained_glass"}, {"ru": "светло-серая стеклянная панель", "en": "light_gray_stained_glass_pane"}, {"ru": "бирюзовое стекло", "en": "cyan_stained_glass"}, {"ru": "бирюзовая стеклянная панель", "en": "cyan_stained_glass_pane"}, {"ru": "фиолетовое стекло", "en": "purple_stained_glass"}, {"ru": "фиолетовая стеклянная панель", "en": "purple_stained_glass_pane"}, {"ru": "синее стекло", "en": "blue_stained_glass"}, {"ru": "синяя стеклянная панель", "en": "blue_stained_glass_pane"}, {"ru": "коричневое стекло", "en": "brown_stained_glass"}, {"ru": "коричневая стеклянная панель", "en": "brown_stained_glass_pane"}, {"ru": "зелёное стекло", "en": "green_stained_glass"}, {"ru": "зелёная стеклянная панель", "en": "green_stained_glass_pane"}, {"ru": "красное стекло", "en": "red_stained_glass"}, {"ru": "красная стеклянная панель", "en": "red_stained_glass_pane"}, {"ru": "чёрное стекло", "en": "black_stained_glass"}, {"ru": "чёрная стеклянная панель", "en": "black_stained_glass_pane"}, {"ru": "белая шерсть", "en": "white_wool"}, {"ru": "оранжевая шерсть", "en": "orange_wool"}, {"ru": "пурпурная шерсть", "en": "magenta_wool"}, {"ru": "светло-голубая шерсть", "en": "light_blue_wool"}, {"ru": "жёлтая шерсть", "en": "yellow_wool"}, {"ru": "салатовая шерсть", "en": "lime_wool"}, {"ru": "розовая шерсть", "en": "pink_wool"}, {"ru": "серая шерсть", "en": "gray_wool"}, {"ru": "светло-серая шерсть", "en": "light_gray_wool"}, {"ru": "бирюзовая шерсть", "en": "cyan_wool"}, {"ru": "фиолетовая шерсть", "en": "purple_wool"}, {"ru": "синяя шерсть", "en": "blue_wool"}, {"ru": "коричневая шерсть", "en": "brown_wool"}, {"ru": "зелёная шерсть", "en": "green_wool"}, {"ru": "красная шерсть", "en": "red_wool"}, {"ru": "чёрная шерсть", "en": "black_wool"}, {"ru": "белый ковёр", "en": "white_carpet"}, {"ru": "оранжевый ковёр", "en": "orange_carpet"}, {"ru": "пурпурный ковёр", "en": "magenta_carpet"}, {"ru": "светло-голубой ковёр", "en": "light_blue_carpet"}, {"ru": "жёлтый ковёр", "en": "yellow_carpet"}, {"ru": "салатовый ковёр", "en": "lime_carpet"}, {"ru": "розовый ковёр", "en": "pink_carpet"}, {"ru": "серый ковёр", "en": "gray_carpet"}, {"ru": "светло-серый ковёр", "en": "light_gray_carpet"}, {"ru": "бирюзовый ковёр", "en": "cyan_carpet"}, {"ru": "фиолетовый ковёр", "en": "purple_carpet"}, {"ru": "синий ковёр", "en": "blue_carpet"}, {"ru": "коричневый ковёр", "en": "brown_carpet"}, {"ru": "зелёный ковёр", "en": "green_carpet"}, {"ru": "красный ковёр", "en": "red_carpet"}, {"ru": "чёрный ковёр", "en": "black_carpet"}, {"ru": "белая кровать", "en": "bed 0"}, {"ru": "оранжевая кровать", "en": "bed 1"}, {"ru": "пурпурная кровать", "en": "bed 2"}, {"ru": "светло-голубая кровать", "en": "bed 3"}, {"ru": "жёлтая кровать", "en": "bed 4"}, {"ru": "салатовая кровать", "en": "bed 5"}, {"ru": "розовая кровать", "en": "bed 6"}, {"ru": "серая кровать", "en": "bed 7"}, {"ru": "светло-серая кровать", "en": "bed 8"}, {"ru": "бирюзовая кровать", "en": "bed 9"}, {"ru": "фиолетовая кровать", "en": "bed 10"}, {"ru": "синяя кровать", "en": "bed 11"}, {"ru": "коричневая кровать", "en": "bed 12"}, {"ru": "зелёная кровать", "en": "bed 13"}, {"ru": "красная кровать", "en": "bed 14"}, {"ru": "чёрная кровать", "en": "bed 15"}, {"ru": "каменные ступени", "en": "stone_stairs"}, {"ru": "булыжные ступени", "en": "cobblestone_stairs"}, {"ru": "моховые ступени", "en": "mossy_cobblestone_stairs"}, {"ru": "дубовые ступени", "en": "oak_stairs"}, {"ru": "еловые ступени", "en": "spruce_stairs"}, {"ru": "берёзовые ступени", "en": "birch_stairs"}, {"ru": "ступени из тёмного дуба", "en": "dark_oak_stairs"}, {"ru": "ступени из акации", "en": "acacia_stairs"}, {"ru": "ступени из мангрового дерева", "en": "mangrove_stairs"}, {"ru": "вишнёвые ступени", "en": "cherry_stairs"}, {"ru": "бамбуковые ступени", "en": "bamboo_stairs"}, {"ru": "ступени из каменного кирпича", "en": "stone_brick_stairs"}, {"ru": "ступени из замшелого каменного кирпича", "en": "mossy_stone_brick_stairs"}, {"ru": "ступени из незерского кирпича", "en": "nether_brick_stairs"}, {"ru": "ступени из красного незерского кирпича", "en": "red_nether_brick_stairs"}, {"ru": "ступени из кварца", "en": "quartz_stairs"}, {"ru": "ступени из песчаника", "en": "sandstone_stairs"}, {"ru": "ступени из красного песчаника", "en": "red_sandstone_stairs"}, {"ru": "ступени из камня Края", "en": "purpur_stairs"}, {"ru": "ступени из призмарина", "en": "prismarine_stairs"}, {"ru": "ступени из тёмного призмарина", "en": "dark_prismarine_stairs"}, {"ru": "ступени из призмаринового кирпича", "en": "prismarine_brick_stairs"}, {"ru": "ступени из сланца", "en": "deepslate_stairs"}, {"ru": "полированные ступени из сланца", "en": "polished_deepslate_stairs"}, {"ru": "ступени из кирпича глубого сланца", "en": "deepslate_brick_stairs"}, {"ru": "ступени из плитки глубого сланца", "en": "deepslate_tile_stairs"}, {"ru": "ступени из полированного чёрного камня", "en": "polished_blackstone_stairs"}, {"ru": "ступени из кирпича полированного чёрного камня", "en": "polished_blackstone_brick_stairs"}, {"ru": "ступени из базальта", "en": "basalt_stairs"}, {"ru": "полированные ступени из базальта", "en": "polished_basalt_stairs"}, {"ru": "каменная плита", "en": "stone_slab"}, {"ru": "булыжная плита", "en": "cobblestone_slab"}, {"ru": "моховая булыжная плита", "en": "mossy_cobblestone_slab"}, {"ru": "дубовая плита", "en": "oak_slab"}, {"ru": "еловая плита", "en": "spruce_slab"}, {"ru": "берёзовая плита", "en": "birch_slab"}, {"ru": "плита из тёмного дуба", "en": "dark_oak_slab"}, {"ru": "плита из акации", "en": "acacia_slab"}, {"ru": "плита из мангрового дерева", "en": "mangrove_slab"}, {"ru": "вишнёвая плита", "en": "cherry_slab"}, {"ru": "бамбуковая плита", "en": "bamboo_slab"}, {"ru": "плита из каменного кирпича", "en": "stone_brick_slab"}, {"ru": "плита из замшелого каменного кирпича", "en": "mossy_stone_brick_slab"}, {"ru": "плита из незерского кирпича", "en": "nether_brick_slab"}, {"ru": "плита из красного незерского кирпича", "en": "red_nether_brick_slab"}, {"ru": "кварцевая плита", "en": "quartz_slab"}, {"ru": "плита из песчаника", "en": "sandstone_slab"}, {"ru": "плита из красного песчаника", "en": "red_sandstone_slab"}, {"ru": "плита из камня Края", "en": "purpur_slab"}, {"ru": "призмариновая плита", "en": "prismarine_slab"}, {"ru": "плита из тёмного призмарина", "en": "dark_prismarine_slab"}, {"ru": "плита из призмаринового кирпича", "en": "prismarine_brick_slab"}, {"ru": "плита из сланца", "en": "deepslate_slab"}, {"ru": "полированная плита из сланца", "en": "polished_deepslate_slab"}, {"ru": "плита из кирпича глубого сланца", "en": "deepslate_brick_slab"}, {"ru": "плита из плитки глубого сланца", "en": "deepslate_tile_slab"}, {"ru": "плита из полированного чёрного камня", "en": "polished_blackstone_slab"}, {"ru": "плита из кирпича полированного чёрного камня", "en": "polished_blackstone_brick_slab"}, {"ru": "базальтовая плита", "en": "basalt_slab"}, {"ru": "полированная базальтовая плита", "en": "polished_basalt_slab"}, {"ru": "каменная стена", "en": "cobblestone_wall"}, {"ru": "моховая булыжная стена", "en": "mossy_cobblestone_wall"}, {"ru": "стена из каменного кирпича", "en": "stone_brick_wall"}, {"ru": "стена из замшелого каменного кирпича", "en": "mossy_stone_brick_wall"}, {"ru": "стена из незерского кирпича", "en": "nether_brick_wall"}, {"ru": "стена из красного незерского кирпича", "en": "red_nether_brick_wall"}, {"ru": "стена из сланца", "en": "deepslate_wall"}, {"ru": "стена из кирпича глубого сланца", "en": "deepslate_brick_wall"}, {"ru": "стена из плитки глубого сланца", "en": "deepslate_tile_wall"}, {"ru": "стена из полированного чёрного камня", "en": "polished_blackstone_wall"}, {"ru": "стена из кирпича полированного чёрного камня", "en": "polished_blackstone_brick_wall"}, {"ru": "редстоун", "en": "redstone_wire"}, {"ru": "редстоуновый факел", "en": "redstone_torch"}, {"ru": "красный факел", "en": "lit_redstone_torch"}, {"ru": "редстоуновый повторитель", "en": "repeater"}, {"ru": "включённый повторитель", "en": "powered_repeater"}, {"ru": "редстоуновый компаратор", "en": "comparator"}, {"ru": "включённый компаратор", "en": "powered_comparator"}, {"ru": "рычаг", "en": "lever"}, {"ru": "каменная кнопка", "en": "stone_button"}, {"ru": "дубовая кнопка", "en": "oak_button"}, {"ru": "еловая кнопка", "en": "spruce_button"}, {"ru": "берёзовая кнопка", "en": "birch_button"}, {"ru": "кнопка из тёмного дуба", "en": "dark_oak_button"}, {"ru": "кнопка из акации", "en": "acacia_button"}, {"ru": "кнопка из мангрового дерева", "en": "mangrove_button"}, {"ru": "вишнёвая кнопка", "en": "cherry_button"}, {"ru": "каменная нажимная плита", "en": "stone_pressure_plate"}, {"ru": "дубовая нажимная плита", "en": "oak_pressure_plate"}, {"ru": "еловая нажимная плита", "en": "spruce_pressure_plate"}, {"ru": "берёзовая нажимная плита", "en": "birch_pressure_plate"}, {"ru": "нажимная плита из тёмного дуба", "en": "dark_oak_pressure_plate"}, {"ru": "нажимная плита из акации", "en": "acacia_pressure_plate"}, {"ru": "нажимная плита из мангрового дерева", "en": "mangrove_pressure_plate"}, {"ru": "вишнёвая нажимная плита", "en": "cherry_pressure_plate"}, {"ru": "золотая нажимная плита", "en": "light_weighted_pressure_plate"}, {"ru": "железная нажимная плита", "en": "heavy_weighted_pressure_plate"}, {"ru": "дубовая дверь", "en": "oak_door"}, {"ru": "еловая дверь", "en": "spruce_door"}, {"ru": "берёзовая дверь", "en": "birch_door"}, {"ru": "дверь из тёмного дуба", "en": "dark_oak_door"}, {"ru": "дверь из акации", "en": "acacia_door"}, {"ru": "дверь из мангрового дерева", "en": "mangrove_door"}, {"ru": "вишнёвая дверь", "en": "cherry_door"}, {"ru": "бамбуковая дверь", "en": "bamboo_door"}, {"ru": "железная дверь", "en": "iron_door"}, {"ru": "дубовый люк", "en": "oak_trapdoor"}, {"ru": "еловый люк", "en": "spruce_trapdoor"}, {"ru": "берёзовый люк", "en": "birch_trapdoor"}, {"ru": "люк из тёмного дуба", "en": "dark_oak_trapdoor"}, {"ru": "люк из акации", "en": "acacia_trapdoor"}, {"ru": "люк из мангрового дерева", "en": "mangrove_trapdoor"}, {"ru": "вишнёвый люк", "en": "cherry_trapdoor"}, {"ru": "бамбуковый люк", "en": "bamboo_trapdoor"}, {"ru": "железный люк", "en": "iron_trapdoor"}, {"ru": "дубовый забор", "en": "oak_fence"}, {"ru": "еловый забор", "en": "spruce_fence"}, {"ru": "берёзовый забор", "en": "birch_fence"}, {"ru": "забор из тёмного дуба", "en": "dark_oak_fence"}, {"ru": "забор из акации", "en": "acacia_fence"}, {"ru": "забор из мангрового дерева", "en": "mangrove_fence"}, {"ru": "вишнёвый забор", "en": "cherry_fence"}, {"ru": "бамбуковый забор", "en": "bamboo_fence"}, {"ru": "забор из незерского кирпича", "en": "nether_brick_fence"}, {"ru": "дубовые ворота", "en": "oak_fence_gate"}, {"ru": "еловые ворота", "en": "spruce_fence_gate"}, {"ru": "берёзовые ворота", "en": "birch_fence_gate"}, {"ru": "ворота из тёмного дуба", "en": "dark_oak_fence_gate"}, {"ru": "ворота из акации", "en": "acacia_fence_gate"}, {"ru": "ворота из мангрового дерева", "en": "mangrove_fence_gate"}, {"ru": "вишнёвые ворота", "en": "cherry_fence_gate"}, {"ru": "бамбуковые ворота", "en": "bamboo_fence_gate"}, {"ru": "факел", "en": "torch"}, {"ru": "светокамень", "en": "glowstone"}, {"ru": "светящийся камень", "en": "glow_lichen"}, {"ru": "светильник Джека", "en": "lit_pumpkin"}, {"ru": "резная тыква", "en": "carved_pumpkin"}, {"ru": "тыква", "en": "pumpkin"}, {"ru": "костёр", "en": "campfire"}, {"ru": "сигнальный костёр", "en": "soul_campfire"}, {"ru": "факел из душ", "en": "soul_torch"}, {"ru": "лампа", "en": "redstone_lamp"}, {"ru": "светящаяся лампа", "en": "lit_redstone_lamp"}, {"ru": "маяк", "en": "beacon"}, {"ru": "морской светильник", "en": "sea_lantern"}, {"ru": "шалкеровый светильник", "en": "shulker_box"}, {"ru": "светящийся гриб", "en": "glowing_mushroom"}, {"ru": "верстак", "en": "crafting_table"}, {"ru": "печь", "en": "furnace"}, {"ru": "горящая печь", "en": "lit_furnace"}, {"ru": "кузнечный мех", "en": "blast_furnace"}, {"ru": "коптильня", "en": "smoker"}, {"ru": "сушилка", "en": "drying_table"}, {"ru": "стол зачарований", "en": "enchanting_table"}, {"ru": "наковальня", "en": "anvil"}, {"ru": "повреждённая наковальня", "en": "chipped_anvil"}, {"ru": "сломанная наковальня", "en": "damaged_anvil"}, {"ru": "точильный камень", "en": "grindstone"}, {"ru": "кронштейн", "en": "lectern"}, {"ru": "бочка", "en": "barrel"}, {"ru": "сундук", "en": "chest"}, {"ru": "сундук-ловушка", "en": "trapped_chest"}, {"ru": "шалкеровый сундук", "en": "shulker_box"}, {"ru": "белый шалкеровый сундук", "en": "white_shulker_box"}, {"ru": "оранжевый шалкеровый сундук", "en": "orange_shulker_box"}, {"ru": "пурпурный шалкеровый сундук", "en": "magenta_shulker_box"}, {"ru": "светло-голубой шалкеровый сундук", "en": "light_blue_shulker_box"}, {"ru": "жёлтый шалкеровый сундук", "en": "yellow_shulker_box"}, {"ru": "салатовый шалкеровый сундук", "en": "lime_shulker_box"}, {"ru": "розовый шалкеровый сундук", "en": "pink_shulker_box"}, {"ru": "серый шалкеровый сундук", "en": "gray_shulker_box"}, {"ru": "светло-серый шалкеровый сундук", "en": "light_gray_shulker_box"}, {"ru": "бирюзовый шалкеровый сундук", "en": "cyan_shulker_box"}, {"ru": "фиолетовый шалкеровый сундук", "en": "purple_shulker_box"}, {"ru": "синий шалкеровый сундук", "en": "blue_shulker_box"}, {"ru": "коричневый шалкеровый сундук", "en": "brown_shulker_box"}, {"ru": "зелёный шалкеровый сундук", "en": "green_shulker_box"}, {"ru": "красный шалкеровый сундук", "en": "red_shulker_box"}, {"ru": "чёрный шалкеровый сундук", "en": "black_shulker_box"}, {"ru": "губка", "en": "sponge"}, {"ru": "мокрая губка", "en": "wet_sponge"}, {"ru": "книга", "en": "bookshelf"}, {"ru": "рамка для книг", "en": "chiseled_bookshelf"}, {"ru": "варочная стойка", "en": "brewing_stand"}, {"ru": "котёл", "en": "cauldron"}, {"ru": "вода в котле", "en": "water_cauldron"}, {"ru": "лава в котле", "en": "lava_cauldron"}, {"ru": "снег в котле", "en": "powder_snow_cauldron"}, {"ru": "цветной котёл", "en": "dye_cauldron"}, {"ru": "блок нот", "en": "noteblock"}, {"ru": "музыкальный автомат", "en": "jukebox"}, {"ru": "повторитель команд", "en": "command_block"}, {"ru": "цепной командный блок", "en": "chain_command_block"}, {"ru": "повторяющийся командный блок", "en": "repeating_command_block"}, {"ru": "структура", "en": "structure_block"}, {"ru": "структура воздуха", "en": "structure_void"}, {"ru": "барьер", "en": "barrier"}, {"ru": "рамка портала в Эндер", "en": "end_portal_frame"}, {"ru": "портал в Эндер", "en": "end_portal"}, {"ru": "портал в Незер", "en": "portal"}, {"ru": "яйцо дракона", "en": "dragon_egg"}, {"ru": "спавнер", "en": "mob_spawner"}, {"ru": "раздатчик", "en": "dispenser"}, {"ru": "дозатор", "en": "dropper"}, {"ru": "наблюдатель", "en": "observer"}, {"ru": "поршень", "en": "piston"}, {"ru": "липкий поршень", "en": "sticky_piston"}, {"ru": "поршень с головой", "en": "piston_arm_collision"}, {"ru": "клей", "en": "slime_block"}, {"ru": "медовый блок", "en": "honey_block"}, {"ru": "паутина", "en": "web"}, {"ru": "коралл", "en": "coral"}, {"ru": "коралловый блок", "en": "coral_block"}, {"ru": "мёртвый коралл", "en": "dead_coral"}, {"ru": "мёртвый коралловый блок", "en": "dead_coral_block"}, {"ru": "коралловый веер", "en": "coral_fan"}, {"ru": "мёртвый коралловый веер", "en": "dead_coral_fan"}, {"ru": "коралловый веер на стене", "en": "coral_wall_fan"}, {"ru": "мёртвый коралловый веер на стене", "en": "dead_coral_wall_fan"}, {"ru": "колонна с пузырями", "en": "bubble_column"}, {"ru": "кактус", "en": "cactus"}, {"ru": "сахарный тростник", "en": "reeds"}, {"ru": "лиана", "en": "vine"}, {"ru": "водяная лилия", "en": "waterlily"}, {"ru": "морская трава", "en": "seagrass"}, {"ru": "высокая морская трава", "en": "tall_seagrass"}, {"ru": "морской огурец", "en": "sea_pickle"}, {"ru": "грибы", "en": "mushroom"}, {"ru": "коричневый гриб", "en": "brown_mushroom"}, {"ru": "красный гриб", "en": "red_mushroom"}, {"ru": "грибной блок", "en": "mushroom_block"}, {"ru": "коричневый грибной блок", "en": "brown_mushroom_block"}, {"ru": "красный грибной блок", "en": "red_mushroom_block"}, {"ru": "адский гриб", "en": "nether_wart"}, {"ru": "адский гриб в блоке", "en": "nether_wart_block"}, {"ru": "адские корни", "en": "crimson_roots"}, {"ru": "искажённые корни", "en": "warped_roots"}, {"ru": "адский мох", "en": "nether_sprouts"}, {"ru": "адский нилиум", "en": "crimson_nylium"}, {"ru": "искажённый нилиум", "en": "warped_nylium"}, {"ru": "гриб", "en": "fungus"}, {"ru": "багровый гриб", "en": "crimson_fungus"}, {"ru": "искажённый гриб", "en": "warped_fungus"}, {"ru": "адский стебель", "en": "crimson_stem"}, {"ru": "искажённый стебель", "en": "warped_stem"}, {"ru": "адская кора", "en": "crimson_hyphae"}, {"ru": "искажённая кора", "en": "warped_hyphae"}, {"ru": "адская доска", "en": "crimson_planks"}, {"ru": "искажённая доска", "en": "warped_planks"}, {"ru": "адская дверь", "en": "crimson_door"}, {"ru": "искажённая дверь", "en": "warped_door"}, {"ru": "адский люк", "en": "crimson_trapdoor"}, {"ru": "искажённый люк", "en": "warped_trapdoor"}, {"ru": "адский забор", "en": "crimson_fence"}, {"ru": "искажённый забор", "en": "warped_fence"}, {"ru": "адские ворота", "en": "crimson_fence_gate"}, {"ru": "искажённые ворота", "en": "warped_fence_gate"}, {"ru": "адская кнопка", "en": "crimson_button"}, {"ru": "искажённая кнопка", "en": "warped_button"}, {"ru": "адская нажимная плита", "en": "crimson_pressure_plate"}, {"ru": "искажённая нажимная плита", "en": "warped_pressure_plate"}, {"ru": "адская плита", "en": "crimson_slab"}, {"ru": "искажённая плита", "en": "warped_slab"}, {"ru": "адские ступени", "en": "crimson_stairs"}, {"ru": "искажённые ступени", "en": "warped_stairs"}, {"ru": "адская табличка", "en": "crimson_sign"}, {"ru": "искажённая табличка", "en": "warped_sign"}, {"ru": "адская табличка на стене", "en": "crimson_wall_sign"}, {"ru": "искажённая табличка на стене", "en": "warped_wall_sign"}, {"ru": "пшеница", "en": "wheat"}, {"ru": "пшеничные семена", "en": "wheat_seeds"}, {"ru": "хлеб", "en": "bread"}, {"ru": "семена тыквы", "en": "pumpkin_seeds"}, {"ru": "арбуз", "en": "melon"}, {"ru": "семена арбуза", "en": "melon_seeds"}, {"ru": "сладкие ягоды", "en": "sweet_berries"}, {"ru": "светящиеся ягоды", "en": "glow_berries"}, {"ru": "морковь", "en": "carrots"}, {"ru": "картофель", "en": "potatoes"}, {"ru": "свекла", "en": "beetroot"}, {"ru": "семена свеклы", "en": "beetroot_seeds"}, {"ru": "какао", "en": "cocoa"}, {"ru": "торт", "en": "cake"}, {"ru": "печенье", "en": "cookie"}, {"ru": "золотое яблоко", "en": "golden_apple"}, {"ru": "зачарованное золотое яблоко", "en": "enchanted_golden_apple"}, {"ru": "деревянная кирка", "en": "wooden_pickaxe"}, {"ru": "каменная кирка", "en": "stone_pickaxe"}, {"ru": "железная кирка", "en": "iron_pickaxe"}, {"ru": "золотая кирка", "en": "golden_pickaxe"}, {"ru": "алмазная кирка", "en": "diamond_pickaxe"}, {"ru": "незеритовая кирка", "en": "netherite_pickaxe"}, {"ru": "деревянная лопата", "en": "wooden_shovel"}, {"ru": "каменная лопата", "en": "stone_shovel"}, {"ru": "железная лопата", "en": "iron_shovel"}, {"ru": "золотая лопата", "en": "golden_shovel"}, {"ru": "алмазная лопата", "en": "diamond_shovel"}, {"ru": "незеритовая лопата", "en": "netherite_shovel"}, {"ru": "деревянный топор", "en": "wooden_axe"}, {"ru": "каменный топор", "en": "stone_axe"}, {"ru": "железный топор", "en": "iron_axe"}, {"ru": "золотой топор", "en": "golden_axe"}, {"ru": "алмазный топор", "en": "diamond_axe"}, {"ru": "незеритовый топор", "en": "netherite_axe"}, {"ru": "деревянная мотыга", "en": "wooden_hoe"}, {"ru": "каменная мотыга", "en": "stone_hoe"}, {"ru": "железная мотыга", "en": "iron_hoe"}, {"ru": "золотая мотыга", "en": "golden_hoe"}, {"ru": "алмазная мотыга", "en": "diamond_hoe"}, {"ru": "незеритовая мотыга", "en": "netherite_hoe"}, {"ru": "деревянный меч", "en": "wooden_sword"}, {"ru": "каменный меч", "en": "stone_sword"}, {"ru": "железный меч", "en": "iron_sword"}, {"ru": "золотой меч", "en": "golden_sword"}, {"ru": "алмазный меч", "en": "diamond_sword"}, {"ru": "незеритовый меч", "en": "netherite_sword"}, {"ru": "ножницы", "en": "shears"}, {"ru": "зажигалка", "en": "flint_and_steel"}, {"ru": "ведро", "en": "bucket"}, {"ru": "ведро воды", "en": "water_bucket"}, {"ru": "ведро лавы", "en": "lava_bucket"}, {"ru": "ведро с лососем", "en": "salmon_bucket"}, {"ru": "ведро с тропической рыбой", "en": "tropical_fish_bucket"}, {"ru": "ведро с аксолотлем", "en": "axolotl_bucket"}, {"ru": "ведро с головастиком", "en": "tadpole_bucket"}, {"ru": "ведро с порошковым снегом", "en": "powder_snow_bucket"}, {"ru": "удочка", "en": "fishing_rod"}, {"ru": "кожаный шлем", "en": "leather_helmet"}, {"ru": "кожаная кираса", "en": "leather_chestplate"}, {"ru": "кожаные поножи", "en": "leather_leggings"}, {"ru": "кожаные ботинки", "en": "leather_boots"}, {"ru": "железный шлем", "en": "iron_helmet"}, {"ru": "железная кираса", "en": "iron_chestplate"}, {"ru": "железные поножи", "en": "iron_leggings"}, {"ru": "железные ботинки", "en": "iron_boots"}, {"ru": "золотой шлем", "en": "golden_helmet"}, {"ru": "золотая кираса", "en": "golden_chestplate"}, {"ru": "золотые поножи", "en": "golden_leggings"}, {"ru": "золотые ботинки", "en": "golden_boots"}, {"ru": "алмазный шлем", "en": "diamond_helmet"}, {"ru": "алмазная кираса", "en": "diamond_chestplate"}, {"ru": "алмазные поножи", "en": "diamond_leggings"}, {"ru": "алмазные ботинки", "en": "diamond_boots"}, {"ru": "незеритовый шлем", "en": "netherite_helmet"}, {"ru": "незеритовая кираса", "en": "netherite_chestplate"}, {"ru": "незеритовые поножи", "en": "netherite_leggings"}, {"ru": "незеритовые ботинки", "en": "netherite_boots"}, {"ru": "вагонетка", "en": "minecart"}, {"ru": "вагонетка с сундуком", "en": "chest_minecart"}, {"ru": "вагонетка с печью", "en": "furnace_minecart"}, {"ru": "вагонетка с воронкой", "en": "hopper_minecart"}, {"ru": "вагонетка с TNT", "en": "tnt_minecart"}, {"ru": "вагонетка с командным блоком", "en": "command_block_minecart"}, {"ru": "лодка", "en": "boat"}, {"ru": "лодка с сундуком", "en": "chest_boat"}, {"ru": "белый краситель", "en": "white_dye"}, {"ru": "оранжевый краситель", "en": "orange_dye"}, {"ru": "пурпурный краситель", "en": "magenta_dye"}, {"ru": "светло-голубой краситель", "en": "light_blue_dye"}, {"ru": "жёлтый краситель", "en": "yellow_dye"}, {"ru": "салатовый краситель", "en": "lime_dye"}, {"ru": "розовый краситель", "en": "pink_dye"}, {"ru": "серый краситель", "en": "gray_dye"}, {"ru": "светло-серый краситель", "en": "light_gray_dye"}, {"ru": "бирюзовый краситель", "en": "cyan_dye"}, {"ru": "фиолетовый краситель", "en": "purple_dye"}, {"ru": "синий краситель", "en": "blue_dye"}, {"ru": "коричневый краситель", "en": "brown_dye"}, {"ru": "зелёный краситель", "en": "green_dye"}, {"ru": "красный краситель", "en": "red_dye"}, {"ru": "чёрный краситель", "en": "black_dye"}];
+
+    function normalize(str) {
+        return str
+            .toLowerCase()
+            .replace(/ё/g, 'е')
+            .replace(/[^a-zа-я0-9\s]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    // ===== ПРАВАЯ ПАНЕЛЬ - ГЕНЕРАТОР =====
+    const playerBtns = document.querySelectorAll('.player-btn');
+    const actionBtns = document.querySelectorAll('.action-btn');
+    const searchInput = document.getElementById('blockSearchInput');
+    const suggestionsBox = document.getElementById('suggestionsBox');
+    const searchSelected = document.getElementById('searchSelected');
+    const amountInput = document.getElementById('amountInput');
+    const minusBtn = document.getElementById('minusBtn');
+    const plusBtn = document.getElementById('plusBtn');
+    const resultCode = document.getElementById('resultCode');
+    const resultBox = document.getElementById('resultBox');
+    const clearHint = document.getElementById('clearHint');
+    const amountControl = document.getElementById('amountControl');
+
+    let selectedPlayer = 'EternalSugar845';
+    let selectedAction = 'give';
+    let selectedBlock = '';
+    let selectedBlockRu = '';
+    let amount = 1;
+    let holdInterval = null;
+    let holdTimeout = null;
+    let highlightedIndex = -1;
+    let currentMatches = [];
+
+    // Инициализация
+    document.querySelector('.player-btn').classList.add('active');
+
+    // Выбор игрока
+    playerBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            playerBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            selectedPlayer = btn.dataset.player;
+            updateResult();
+        });
+    });
+
+    // Выбор действия
+    actionBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            actionBtns.forEach(b => {
+                b.classList.remove('active-give', 'active-clear');
+            });
+            const action = btn.dataset.action;
+            if (action === 'give') {
+                btn.classList.add('active-give');
+                amountControl.classList.remove('amount-disabled');
+                clearHint.style.display = 'block';
+            } else {
+                btn.classList.add('active-clear');
+                amountControl.classList.add('amount-disabled');
+                clearHint.style.display = 'none';
+            }
+            selectedAction = action;
+            updateResult();
+        });
+    });
+
+    // ===== ПОИСК БЛОКА С АВТОДОПОЛНЕНИЕМ =====
+    function renderSuggestions(query) {
+        const normQuery = normalize(query);
+
+        if (!normQuery) {
+            suggestionsBox.classList.remove('show');
+            suggestionsBox.innerHTML = '';
+            currentMatches = [];
+            highlightedIndex = -1;
+            return;
+        }
+
+        currentMatches = BLOCKS.filter(b => normalize(b.ru).includes(normQuery)).slice(0, 30);
+        highlightedIndex = -1;
+
+        if (currentMatches.length === 0) {
+            suggestionsBox.innerHTML = '<div class="suggestion-empty">ничего не найдено</div>';
+            suggestionsBox.classList.add('show');
+            return;
+        }
+
+        suggestionsBox.innerHTML = currentMatches.map((b, i) =>
+            `<div class="suggestion-item" data-index="${i}">
+                <span class="suggestion-ru">${b.ru}</span>
+                <span class="suggestion-en">${b.en}</span>
+            </div>`
+        ).join('');
+        suggestionsBox.classList.add('show');
+    }
+
+    function pickBlock(block) {
+        selectedBlock = block.en;
+        selectedBlockRu = block.ru;
+        searchInput.value = block.ru;
+        searchSelected.textContent = `выбрано: ${block.ru} (${block.en})`;
+        searchSelected.classList.add('show');
+        suggestionsBox.classList.remove('show');
+        suggestionsBox.innerHTML = '';
+        currentMatches = [];
+        highlightedIndex = -1;
+        updateResult();
+    }
+
+    searchInput.addEventListener('input', () => {
+        renderSuggestions(searchInput.value);
+    });
+
+    searchInput.addEventListener('focus', () => {
+        if (searchInput.value.trim()) {
+            renderSuggestions(searchInput.value);
+        }
+    });
+
+    searchInput.addEventListener('keydown', (e) => {
+        if (!currentMatches.length) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            highlightedIndex = Math.min(highlightedIndex + 1, currentMatches.length - 1);
+            updateHighlight();
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            highlightedIndex = Math.max(highlightedIndex - 1, 0);
+            updateHighlight();
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            const index = highlightedIndex >= 0 ? highlightedIndex : 0;
+            if (currentMatches[index]) {
+                pickBlock(currentMatches[index]);
+            }
+        } else if (e.key === 'Escape') {
+            suggestionsBox.classList.remove('show');
+        }
+    });
+
+    function updateHighlight() {
+        const items = suggestionsBox.querySelectorAll('.suggestion-item');
+        items.forEach((item, i) => {
+            item.classList.toggle('highlighted', i === highlightedIndex);
+        });
+        if (items[highlightedIndex]) {
+            items[highlightedIndex].scrollIntoView({ block: 'nearest' });
+        }
+    }
+
+    suggestionsBox.addEventListener('click', (e) => {
+        const item = e.target.closest('.suggestion-item');
+        if (!item) return;
+        const index = parseInt(item.dataset.index);
+        if (currentMatches[index]) {
+            pickBlock(currentMatches[index]);
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.search-wrap')) {
+            suggestionsBox.classList.remove('show');
+        }
+    });
+
+    // Управление количеством
+    function updateAmount(value) {
+        let newVal = parseInt(value);
+        if (isNaN(newVal) || newVal < 1) newVal = 1;
+        if (newVal > 64) newVal = 64;
+        amount = newVal;
+        amountInput.value = amount;
+        updateResult();
+    }
+
+    amountInput.addEventListener('input', () => {
+        let val = parseInt(amountInput.value);
+        if (isNaN(val)) val = 1;
+        if (val < 1) val = 1;
+        if (val > 64) val = 64;
+        amount = val;
+        amountInput.value = amount;
+        updateResult();
+    });
+
+    amountInput.addEventListener('blur', () => {
+        if (amountInput.value === '' || parseInt(amountInput.value) < 1) {
+            amount = 1;
+            amountInput.value = 1;
+            updateResult();
+        }
+    });
+
+    function startHold(delta) {
+        stopHold();
+        holdTimeout = setTimeout(() => {
+            holdInterval = setInterval(() => {
+                let newVal = amount + delta;
+                if (newVal < 1) newVal = 1;
+                if (newVal > 64) newVal = 64;
+                updateAmount(newVal);
+            }, 80);
+        }, 300);
+    }
+
+    function stopHold() {
+        if (holdTimeout) {
+            clearTimeout(holdTimeout);
+            holdTimeout = null;
+        }
+        if (holdInterval) {
+            clearInterval(holdInterval);
+            holdInterval = null;
+        }
+    }
+
+    minusBtn.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        let newVal = amount - 1;
+        if (newVal < 1) newVal = 1;
+        updateAmount(newVal);
+        startHold(-1);
+    });
+
+    plusBtn.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        let newVal = amount + 1;
+        if (newVal > 64) newVal = 64;
+        updateAmount(newVal);
+        startHold(1);
+    });
+
+    ['mouseup', 'mouseleave', 'touchend', 'touchcancel'].forEach(event => {
+        document.addEventListener(event, stopHold);
+    });
+
+    // Генерация команды
+    function generateCommand() {
+        if (selectedAction === 'give') {
+            return `give ${selectedPlayer} ${selectedBlock} ${amount}`;
+        } else {
+            return `clear ${selectedPlayer} ${selectedBlock} 0`;
+        }
+    }
+
+    function updateResult() {
+        resultCode.textContent = generateCommand();
+    }
+
+    // Копирование результата
+    resultBox.addEventListener('click', async () => {
+        const text = resultCode.textContent;
+        try {
+            await navigator.clipboard.writeText(text);
+            showToast('скопировано');
+            resultBox.classList.add('copied');
+            setTimeout(() => resultBox.classList.remove('copied'), 1000);
+        } catch (err) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            showToast('скопировано');
+            resultBox.classList.add('copied');
+            setTimeout(() => resultBox.classList.remove('copied'), 1000);
+        }
+    });
+
+    function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(toast._timeout);
+        toast._timeout = setTimeout(() => {
+            toast.classList.remove('show');
+        }, 1500);
+    }
+
+    updateResult();
+</script>
+
+</body>
+</html>
