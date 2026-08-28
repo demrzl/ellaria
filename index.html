@@ -329,6 +329,18 @@
         .toast.show {
             opacity: 1;
         }
+
+        .amount-btn-full:hover {
+            background: #333 !important;
+            border-color: #66bb6a !important;
+        }
+        .amount-btn-full:active {
+            transform: scale(0.95);
+        }
+        .amount-btn-full.amount-disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -410,14 +422,17 @@
         </div>
 
         <div class="section">
-            <span class="section-label">количество</span>
-            <div class="amount-control" id="amountControl">
-                <button class="amount-btn" id="minusBtn">−</button>
-                <input type="number" class="amount-input" id="amountInput" value="1" min="1" max="64">
-                <button class="amount-btn" id="plusBtn">+</button>
-            </div>
-            <div class="clear-hint" id="clearHint">в режиме удалить количество не используется</div>
+    <span class="section-label">количество</span>
+    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+        <div class="amount-control" id="amountControl">
+            <button class="amount-btn" id="minusBtn">−</button>
+            <input type="number" class="amount-input" id="amountInput" value="1" min="1" max="64">
+            <button class="amount-btn" id="plusBtn">+</button>
         </div>
+        <button class="amount-btn-full" id="fullBtn" style="background: #2a2a2a; border: 2px solid #3a3a3a; color: #d4d4d4; padding: 6px 16px; border-radius: 8px; font-size: 14px; cursor: pointer; font-family: inherit; transition: all 0.2s;">фулл</button>
+    </div>
+    <div class="clear-hint" id="clearHint">в режиме удалить количество не используется</div>
+</div>
 
         <div class="result-box" id="resultBox">
             <div class="result-label">нажми чтобы скопировать</div>
@@ -506,26 +521,28 @@
         });
     });
 
-    // Выбор действия
-    actionBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            actionBtns.forEach(b => {
-                b.classList.remove('active-give', 'active-clear');
-            });
-            const action = btn.dataset.action;
-            if (action === 'give') {
-                btn.classList.add('active-give');
-                amountControl.classList.remove('amount-disabled');
-                clearHint.style.display = 'block';
-            } else {
-                btn.classList.add('active-clear');
-                amountControl.classList.add('amount-disabled');
-                clearHint.style.display = 'none';
-            }
-            selectedAction = action;
-            updateResult();
-        });
-    });
+   // Выбор действия
+   actionBtns.forEach(btn => {
+       btn.addEventListener('click', () => {
+           actionBtns.forEach(b => {
+               b.classList.remove('active-give', 'active-clear');
+           });
+           const action = btn.dataset.action;
+           if (action === 'give') {
+               btn.classList.add('active-give');
+               amountControl.classList.remove('amount-disabled');
+               fullBtn.classList.remove('amount-disabled');
+               clearHint.style.display = 'block';
+           } else {
+               btn.classList.add('active-clear');
+               amountControl.classList.add('amount-disabled');
+               fullBtn.classList.add('amount-disabled');
+               clearHint.style.display = 'none';
+           }
+           selectedAction = action;
+           updateResult();
+       });
+   });
 
     // ===== ПОИСК БЛОКА С АВТОДОПОЛНЕНИЕМ =====
     function renderSuggestions(query) {
@@ -742,6 +759,14 @@
     }
 
     updateResult();
+
+    // Кнопка "фулл"
+    const fullBtn = document.getElementById('fullBtn');
+
+    fullBtn.addEventListener('click', () => {
+        if (selectedAction === 'clear') return;
+        updateAmount(64);
+    });
 </script>
 
 </body>
