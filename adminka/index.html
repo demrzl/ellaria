@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>админка</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0e0e0e;
+            color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+        .left-panel {
+            flex: 1;
+            min-width: 300px;
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.8);
+        }
+        .right-panel {
+            flex: 1;
+            min-width: 300px;
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+        }
+        h2 {
+            font-size: 16px;
+            font-weight: 500;
+            color: #aaa;
+            margin-bottom: 16px;
+            letter-spacing: 0.3px;
+        }
+        
+        /* Левая панель - команды */
+        .cmd-item {
+            background: #262626;
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+            border: 2px solid transparent;
+            user-select: none;
+        }
+        .cmd-item:hover {
+            background: #2e2e2e;
+            border-color: #3a3a3a;
+        }
+        .cmd-item:active {
+            transform: scale(0.98);
+        }
+        .cmd-label {
+            font-size: 14px;
+            color: #888;
+            min-width: 100px;
+            font-weight: 500;
+        }
+        .cmd-text {
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 14px;
+            color: #d4d4d4;
+            flex: 1;
+            margin: 0 12px;
+            word-break: break-all;
+        }
+        .cmd-item.copied {
+            border-color: #4caf50;
+            background: #1e2a1e;
+        }
+        
+        /* Правая панель - генератор */
+        .section {
+            margin-bottom: 20px;
+        }
+        .section-label {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .players-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .player-btn {
+            background: #262626;
+            border: 2px solid transparent;
+            color: #d4d4d4;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .player-btn:hover {
+            background: #333;
+        }
+        .player-btn.active {
+            border-color: #4caf50;
+            background: #1e2a1e;
+        }
+        .action-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .action-btn {
+            flex: 1;
+            background: #262626;
+            border: 2px solid transparent;
+            color: #d4d4d4;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .action-btn:hover {
+            background: #333;
+        }
+        .action-btn.active-give {
+            border-color: #4caf50;
+            background: #1e2a1e;
+        }
+        .action-btn.active-clear {
+            border-color: #f44336;
+            background: #2a1e1e;
+        }
+        .search-wrap {
+            position: relative;
+        }
+        .search-input {
+            width: 100%;
+            background: #262626;
+            border: 2px solid transparent;
+            color: #d4d4d4;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .search-input:focus {
+            border-color: #4caf50;
+        }
+        .search-selected {
+            font-size: 12px;
+            color: #4caf50;
+            margin-top: 6px;
+            display: none;
+        }
+        .search-selected.show {
+            display: block;
+        }
+        .suggestions {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            right: 0;
+            background: #1f1f1f;
+            border: 1px solid #333;
+            border-radius: 10px;
+            max-height: 220px;
+            overflow-y: auto;
+            z-index: 10;
+            display: none;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+        }
+        .suggestions.show {
+            display: block;
+        }
+        .suggestion-item {
+            padding: 10px 14px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #d4d4d4;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+        .suggestion-item:hover,
+        .suggestion-item.highlighted {
+            background: #2e2e2e;
+        }
+        .suggestion-en {
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 12px;
+            color: #666;
+            white-space: nowrap;
+        }
+        .suggestion-empty {
+            padding: 10px 14px;
+            font-size: 13px;
+            color: #666;
+        }
+        .amount-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #262626;
+            border-radius: 8px;
+            padding: 4px;
+            width: fit-content;
+        }
+        .amount-btn {
+            background: #333;
+            border: none;
+            color: #d4d4d4;
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            font-size: 20px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-family: inherit;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .amount-btn:hover {
+            background: #444;
+        }
+        .amount-btn:active {
+            transform: scale(0.95);
+        }
+        .amount-input {
+            background: transparent;
+            border: none;
+            color: #d4d4d4;
+            font-size: 18px;
+            width: 50px;
+            text-align: center;
+            font-family: inherit;
+            outline: none;
+        }
+        .amount-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+        }
+        .amount-input[type=number] {
+            -moz-appearance: textfield;
+        }
+        .amount-disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+        .clear-hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+        .result-box {
+            margin-top: auto;
+            background: #0e0e0e;
+            border-radius: 12px;
+            padding: 16px;
+            border: 2px solid #2a2a2a;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            margin-top: 20px;
+        }
+        .result-box:hover {
+            border-color: #3a3a3a;
+            background: #141414;
+        }
+        .result-box.copied {
+            border-color: #4caf50;
+            background: #1a2a1a;
+        }
+        .result-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 6px;
+        }
+        .result-code {
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 16px;
+            color: #d4d4d4;
+            word-break: break-all;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(40,40,40,0.95);
+            color: #eee;
+            padding: 10px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            border: 1px solid #444;
+            backdrop-filter: blur(10px);
+        }
+        .toast.show {
+            opacity: 1;
+        }
+
+        .amount-btn-full:hover {
+            background: #333 !important;
+            border-color: #66bb6a !important;
+        }
+        .amount-btn-full:active {
+            transform: scale(0.95);
+        }
+        .amount-btn-full.amount-disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Левая панель - готовые команды -->
+    <div class="left-panel">
+        <h2>готовые команды</h2>
+
+        <div class="cmd-item" data-copy="time set day">
+            <span class="cmd-label">день</span>
+            <span class="cmd-text">time set day</span>
+        </div>
+
+        <div class="cmd-item" data-copy="time set night">
+            <span class="cmd-label">ночь</span>
+            <span class="cmd-text">time set night</span>
+        </div>
+
+        <div class="cmd-item" data-copy="weather clear">
+            <span class="cmd-label">ясная погода</span>
+            <span class="cmd-text">weather clear</span>
+        </div>
+
+        <div class="cmd-item" data-copy="kill @e[type=creeper]">
+            <span class="cmd-label">криперы</span>
+            <span class="cmd-text">kill @e[type=creeper]</span>
+        </div>
+
+        <div class="cmd-item" data-copy="kill @e[type=skeleton]">
+            <span class="cmd-label">скелеты</span>
+            <span class="cmd-text">kill @e[type=skeleton]</span>
+        </div>
+
+        <div class="cmd-item" data-copy="kill @e[type=zombie]">
+            <span class="cmd-label">зомби</span>
+            <span class="cmd-text">kill @e[type=zombie]</span>
+        </div>
+
+        <div class="cmd-item" data-copy="kill @e[type=drowned]">
+            <span class="cmd-label">утопленники</span>
+            <span class="cmd-text">kill @e[type=drowned]</span>
+        </div>
+
+        <div class="cmd-item" data-copy="kill @e[type=enderman]">
+            <span class="cmd-label">эндеры</span>
+            <span class="cmd-text">kill @e[type=enderman]</span>
+        </div>
+
+        <div class="cmd-item" data-copy="kill @e[type=spider]">
+            <span class="cmd-label">пауки</span>
+            <span class="cmd-text">kill @e[type=spider]</span>
+        </div>
+    </div>
+
+    <!-- Правая панель - генератор -->
+    <div class="right-panel">
+        <h2>генератор</h2>
+
+        <div class="section">
+            <span class="section-label">игрок</span>
+            <div class="players-list">
+                <button class="player-btn" data-player="EternalSugar845">EternalSugar845</button>
+                <button class="player-btn" data-player="Yan2125">Yan2125</button>
+                <button class="player-btn" data-player="gretta9339">gretta9339</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <span class="section-label">действие</span>
+            <div class="action-group">
+                <button class="action-btn active-give" data-action="give">выдать</button>
+                <button class="action-btn" data-action="clear">удалить</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <span class="section-label">выбор блока</span>
+            <div class="search-wrap">
+                <input type="text" class="search-input" id="blockSearchInput" placeholder="начни вводить название..." autocomplete="off">
+                <div class="suggestions" id="suggestionsBox"></div>
+            </div>
+            <div class="search-selected" id="searchSelected"></div>
+        </div>
+
+        <div class="section">
+    <span class="section-label">количество</span>
+    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+        <div class="amount-control" id="amountControl">
+            <button class="amount-btn" id="minusBtn">−</button>
+            <input type="number" class="amount-input" id="amountInput" value="1" min="1" max="64">
+            <button class="amount-btn" id="plusBtn">+</button>
+        </div>
+        <button class="amount-btn-full" id="fullBtn" style="background: #2a2a2a; border: 2px solid #3a3a3a; color: #d4d4d4; padding: 6px 16px; border-radius: 8px; font-size: 14px; cursor: pointer; font-family: inherit; transition: all 0.2s;">фулл</button>
+    </div>
+    <div class="clear-hint" id="clearHint">в режиме удалить количество не используется</div>
+</div>
+
+        <div class="result-box" id="resultBox">
+            <div class="result-label">нажми чтобы скопировать</div>
+            <div class="result-code" id="resultCode">give EternalSugar845 copper_sword 1</div>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="toast">скопировано</div>
+
+<script>
+    // ===== ЛЕВАЯ ПАНЕЛЬ - КОПИРОВАНИЕ КОМАНД =====
+    const cmdItems = document.querySelectorAll('.cmd-item');
+    const toast = document.getElementById('toast');
+
+    cmdItems.forEach(item => {
+        item.addEventListener('click', async () => {
+            const text = item.dataset.copy;
+            try {
+                await navigator.clipboard.writeText(text);
+                showToast('скопировано');
+                cmdItems.forEach(el => el.classList.remove('copied'));
+                item.classList.add('copied');
+                setTimeout(() => item.classList.remove('copied'), 1000);
+            } catch (err) {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast('скопировано');
+                cmdItems.forEach(el => el.classList.remove('copied'));
+                item.classList.add('copied');
+                setTimeout(() => item.classList.remove('copied'), 1000);
+            }
+        });
+    });
+
+    // ===== БАЗА БЛОКОВ ДЛЯ ПОИСКА =====
+    const BLOCKS = [{"ru": "камень", "en": "stone"}, {"ru": "земля", "en": "dirt"}, {"ru": "стойка для брони", "en": "armor_stand"}, {"ru": "поводок", "en": "lead"}, {"ru": "обсидиан", "en": "obsidian"}, {"ru": "песок", "en": "sand"}];
+
+    function normalize(str) {
+        return str
+            .toLowerCase()
+            .replace(/ё/g, 'е')
+            .replace(/[^a-zа-я0-9\s]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    // ===== ПРАВАЯ ПАНЕЛЬ - ГЕНЕРАТОР =====
+    const playerBtns = document.querySelectorAll('.player-btn');
+    const actionBtns = document.querySelectorAll('.action-btn');
+    const searchInput = document.getElementById('blockSearchInput');
+    const suggestionsBox = document.getElementById('suggestionsBox');
+    const searchSelected = document.getElementById('searchSelected');
+    const amountInput = document.getElementById('amountInput');
+    const minusBtn = document.getElementById('minusBtn');
+    const plusBtn = document.getElementById('plusBtn');
+    const resultCode = document.getElementById('resultCode');
+    const resultBox = document.getElementById('resultBox');
+    const clearHint = document.getElementById('clearHint');
+    const amountControl = document.getElementById('amountControl');
+
+    let selectedPlayer = 'EternalSugar845';
+    let selectedAction = 'give';
+    let selectedBlock = '';
+    let selectedBlockRu = '';
+    let amount = 1;
+    let holdInterval = null;
+    let holdTimeout = null;
+    let highlightedIndex = -1;
+    let currentMatches = [];
+
+    // Инициализация
+    document.querySelector('.player-btn').classList.add('active');
+
+    // Выбор игрока
+    playerBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            playerBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            selectedPlayer = btn.dataset.player;
+            updateResult();
+        });
+    });
+
+   // Выбор действия
+   actionBtns.forEach(btn => {
+       btn.addEventListener('click', () => {
+           actionBtns.forEach(b => {
+               b.classList.remove('active-give', 'active-clear');
+           });
+           const action = btn.dataset.action;
+           if (action === 'give') {
+               btn.classList.add('active-give');
+               amountControl.classList.remove('amount-disabled');
+               fullBtn.classList.remove('amount-disabled');
+               clearHint.style.display = 'block';
+           } else {
+               btn.classList.add('active-clear');
+               amountControl.classList.add('amount-disabled');
+               fullBtn.classList.add('amount-disabled');
+               clearHint.style.display = 'none';
+           }
+           selectedAction = action;
+           updateResult();
+       });
+   });
+
+    // ===== ПОИСК БЛОКА С АВТОДОПОЛНЕНИЕМ =====
+    function renderSuggestions(query) {
+        const normQuery = normalize(query);
+
+        if (!normQuery) {
+            suggestionsBox.classList.remove('show');
+            suggestionsBox.innerHTML = '';
+            currentMatches = [];
+            highlightedIndex = -1;
+            return;
+        }
+
+        currentMatches = BLOCKS.filter(b => normalize(b.ru).includes(normQuery)).slice(0, 30);
+        highlightedIndex = -1;
+
+        if (currentMatches.length === 0) {
+            suggestionsBox.innerHTML = '<div class="suggestion-empty">ничего не найдено</div>';
+            suggestionsBox.classList.add('show');
+            return;
+        }
+
+        suggestionsBox.innerHTML = currentMatches.map((b, i) =>
+            `<div class="suggestion-item" data-index="${i}">
+                <span class="suggestion-ru">${b.ru}</span>
+                <span class="suggestion-en">${b.en}</span>
+            </div>`
+        ).join('');
+        suggestionsBox.classList.add('show');
+    }
+
+    function pickBlock(block) {
+        selectedBlock = block.en;
+        selectedBlockRu = block.ru;
+        searchInput.value = block.ru;
+        searchSelected.textContent = `выбрано: ${block.ru} (${block.en})`;
+        searchSelected.classList.add('show');
+        suggestionsBox.classList.remove('show');
+        suggestionsBox.innerHTML = '';
+        currentMatches = [];
+        highlightedIndex = -1;
+        updateResult();
+    }
+
+    searchInput.addEventListener('input', () => {
+        renderSuggestions(searchInput.value);
+    });
+
+    searchInput.addEventListener('focus', () => {
+        if (searchInput.value.trim()) {
+            renderSuggestions(searchInput.value);
+        }
+    });
+
+    searchInput.addEventListener('keydown', (e) => {
+        if (!currentMatches.length) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            highlightedIndex = Math.min(highlightedIndex + 1, currentMatches.length - 1);
+            updateHighlight();
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            highlightedIndex = Math.max(highlightedIndex - 1, 0);
+            updateHighlight();
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            const index = highlightedIndex >= 0 ? highlightedIndex : 0;
+            if (currentMatches[index]) {
+                pickBlock(currentMatches[index]);
+            }
+        } else if (e.key === 'Escape') {
+            suggestionsBox.classList.remove('show');
+        }
+    });
+
+    function updateHighlight() {
+        const items = suggestionsBox.querySelectorAll('.suggestion-item');
+        items.forEach((item, i) => {
+            item.classList.toggle('highlighted', i === highlightedIndex);
+        });
+        if (items[highlightedIndex]) {
+            items[highlightedIndex].scrollIntoView({ block: 'nearest' });
+        }
+    }
+
+    suggestionsBox.addEventListener('click', (e) => {
+        const item = e.target.closest('.suggestion-item');
+        if (!item) return;
+        const index = parseInt(item.dataset.index);
+        if (currentMatches[index]) {
+            pickBlock(currentMatches[index]);
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.search-wrap')) {
+            suggestionsBox.classList.remove('show');
+        }
+    });
+
+    // Управление количеством
+    function updateAmount(value) {
+        let newVal = parseInt(value);
+        if (isNaN(newVal) || newVal < 1) newVal = 1;
+        if (newVal > 64) newVal = 64;
+        amount = newVal;
+        amountInput.value = amount;
+        updateResult();
+    }
+
+    amountInput.addEventListener('input', () => {
+        let val = parseInt(amountInput.value);
+        if (isNaN(val)) val = 1;
+        if (val < 1) val = 1;
+        if (val > 64) val = 64;
+        amount = val;
+        amountInput.value = amount;
+        updateResult();
+    });
+
+    amountInput.addEventListener('blur', () => {
+        if (amountInput.value === '' || parseInt(amountInput.value) < 1) {
+            amount = 1;
+            amountInput.value = 1;
+            updateResult();
+        }
+    });
+
+    function startHold(delta) {
+        stopHold();
+        holdTimeout = setTimeout(() => {
+            holdInterval = setInterval(() => {
+                let newVal = amount + delta;
+                if (newVal < 1) newVal = 1;
+                if (newVal > 64) newVal = 64;
+                updateAmount(newVal);
+            }, 80);
+        }, 300);
+    }
+
+    function stopHold() {
+        if (holdTimeout) {
+            clearTimeout(holdTimeout);
+            holdTimeout = null;
+        }
+        if (holdInterval) {
+            clearInterval(holdInterval);
+            holdInterval = null;
+        }
+    }
+
+    minusBtn.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        let newVal = amount - 1;
+        if (newVal < 1) newVal = 1;
+        updateAmount(newVal);
+        startHold(-1);
+    });
+
+    plusBtn.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        let newVal = amount + 1;
+        if (newVal > 64) newVal = 64;
+        updateAmount(newVal);
+        startHold(1);
+    });
+
+    ['mouseup', 'mouseleave', 'touchend', 'touchcancel'].forEach(event => {
+        document.addEventListener(event, stopHold);
+    });
+
+    // Генерация команды
+    function generateCommand() {
+        if (selectedAction === 'give') {
+            return `give ${selectedPlayer} ${selectedBlock} ${amount}`;
+        } else {
+            return `clear ${selectedPlayer} ${selectedBlock} 0`;
+        }
+    }
+
+    function updateResult() {
+        resultCode.textContent = generateCommand();
+    }
+
+    // Копирование результата
+    resultBox.addEventListener('click', async () => {
+        const text = resultCode.textContent;
+        try {
+            await navigator.clipboard.writeText(text);
+            showToast('скопировано');
+            resultBox.classList.add('copied');
+            setTimeout(() => resultBox.classList.remove('copied'), 1000);
+        } catch (err) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            showToast('скопировано');
+            resultBox.classList.add('copied');
+            setTimeout(() => resultBox.classList.remove('copied'), 1000);
+        }
+    });
+
+    function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(toast._timeout);
+        toast._timeout = setTimeout(() => {
+            toast.classList.remove('show');
+        }, 1500);
+    }
+
+    updateResult();
+
+    // Кнопка "фулл"
+    const fullBtn = document.getElementById('fullBtn');
+
+    fullBtn.addEventListener('click', () => {
+        if (selectedAction === 'clear') return;
+        updateAmount(64);
+    });
+</script>
+
+</body>
+</html>
